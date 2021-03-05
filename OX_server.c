@@ -87,6 +87,40 @@ int main(void)
   char turn = 'O';
   int pos, round = 0;
 
+  do {
+
+    printform(frm, (char*)sc);
+
+    if(turn == 'X') {  //client turn
+      snprintf(buf, MAXDATASIZE, "%d", pos); //?
+      num_rcv=send(new_fd, buf, sizeof(buf), 0); //?
+      num_rcv=recv(new_fd, buf, sizeof(buf), 0);
+      sscanf(buf, "%d", &pos); //scan an int from buf and store in pos 
+    }
+    else {  //server play
+      printf("turn[%c]>>", turn);
+      scanf("%d", &pos);
+    }
+     
+    ((char*)sc)[pos-1] = turn;
+
+    if(check(sc)) {
+
+      printf("%c win!", turn);
+      break;
+
+    }
+    round++;
+    turn = (turn=='O') ? 'X' : 'O';
+    
+    } while(round < 9);
+ 
+  if(round == 9 )
+  {
+    printf("draw!\n");
+  }
+
+
 
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_UNSPEC;  //for IPv4 => AF_INET, IPv6 = AF_INET6
@@ -162,6 +196,56 @@ int main(void)
       get_in_addr((struct sockaddr *)&their_addr),
       s, sizeof s);
     printf("server: got connection from %s\n", s);
+   
+    do {
+
+      if(recv(new_fd, buf, sizeof(buf), 0) < 0) { //recieved from client
+      perror("received from client failed !");
+      exit(1);
+      }
+
+      turn = 'O';
+      printf("turn[%c]>>%s\n", turn, buf); //print the choice of client
+      sscanf(buf, "%d", &pos); //store the int form buf in pos
+      ((char*)sc)[pos-1] = turn;
+       
+      if(check(sc)) {
+
+          printf("%c win!", turn);
+          break;
+
+      }
+
+      round++;
+
+      if(round==5) {
+        printf("The competition is draw !\n");
+        break;
+      }
+
+      /* Server turn */
+
+      turn = (turn == 'O') ? 'X' : 'O' ;
+      printf("trun[%c]>>", turn); //'X' turn (server)
+      scanf("%d", &pos);
+
+      ((char*)sc)[pos-1] = turn;
+      printform(frm, (char*)sc);
+
+      if(check(sc)) {
+
+          printf("%c win!", turn);
+          break;
+
+      }
+      snprintf(buf, MAXDATASIZE, "%d", pos); //store pos in buf
+
+      if(send(new_fd, buf, sizeof(buf), 0) < 0) { //send to client
+        perror("send to client failed !");
+        exit(1);
+      }
+
+    }while(round < 5);
 
     /* 直接send也可以
     send(new_fd, "Hello, world!", 13, 0); */
@@ -170,47 +254,6 @@ int main(void)
       fork a child process to handle the new connection*/
     if (!fork()) { // 這個是 child process
       close(sockfd); // child 不需要 listener
-
-      while(round < 9) {
-
-        printform(frm, (char*)sc);
-
-        if(turn == 'X') {
-          snprintf(buf, MAXDATASIZE, "%d", pos); //?
-          num_rcv=send(new_fd, buf, sizeof(buf), 0); //?
-          num_rcv=recv(new_fd, buf, sizeof(buf), 0);
-          sscanf(buf, "%d", &pos); //scan an int from buf and store in pos 
-        }
-        else {
-          printf("turn[%c]>>", turn);
-          scanf("%d", &pos);
-        }
-        
-        ((char*)sc)[pos-1] = turn;
-
-        if(check(sc)) {
-
-          printf("%c win!", turn);
-          break;
-
-        }
-
-        snprintf(buf, MAXDATASIZE, "%d", pos); //define 'buf' as int and pos will store in buf, then send buf to client 
-
-        if(send(sockfd, buf, sizeof(buf), 0) < 0) {
-          perror("send to client failed !");
-          exit(1);
-        }
-
-        round++;
-        turn = (turn=='O') ? 'X' : 'O';
-
-      }
-      if(round==9) {
- 
-        printf("平手！！");
-
-      }
 
         close(new_fd);
 
