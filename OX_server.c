@@ -169,7 +169,7 @@ int main(void)
 
     if( !fork() ) { //this is child process
       
-      close(sockfd);  //child dont need to listener
+      close(sockfd);  //child dont need listener
 
       do {
 
@@ -180,19 +180,16 @@ int main(void)
 
         turn = 'O';
         printf("turn[%c]>>%s\n", turn, buf); //print the choice of client
-        sscanf(buf, "%d", &pos); //store the int form buf in pos
+        sscanf(buf, "%d", &pos); //store the buf in pos with integer form
         ((char*)sc)[pos-1] = turn;
-       
+
+       	printform(frm, (char*)sc);
+
         if(check(sc)) {
-
-          printf("%c win!", turn);
-     
-		  break;
-
+          printf("%c win!\n", turn);
+          break;
         }  
-
-		printform(frm, (char*)sc);
-		
+	
         round++;
 
         if(round==5) {
@@ -200,7 +197,7 @@ int main(void)
           break;
         }
 
-      /* Server turn */
+        /* Server turn */
 
         turn = (turn == 'O') ? 'X' : 'O' ;
         printf("trun[%c]>>", turn); //'X' turn (server)
@@ -211,12 +208,13 @@ int main(void)
 
         if(check(sc)) {
 
-          printf("%c win!", turn);
+          printf("%c win!\n", turn);
+          snprintf(buf, MAXDATASIZE, "%d", pos); //store pos in buf
+          send(new_fd, buf, sizeof(buf), 0); //when server win, send the pos to client
           break;
+        }  
 
-        } 
         snprintf(buf, MAXDATASIZE, "%d", pos); //store pos in buf
-
         if(send(new_fd, buf, sizeof(buf), 0) < 0) { //send to client
           perror("send to client failed !");
           exit(1);

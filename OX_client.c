@@ -1,4 +1,3 @@
-
 /*
 ** client.c -- 一個 stream socket client 的 demo
 */
@@ -127,8 +126,8 @@ int main(int argc, char *argv[])
         if(turn == 'X') {  //server turn , receive the pos from server
           if(recv(sockfd, buf, sizeof(buf), 0) < 0) { 
 		    perror("received from server failed !");
-			exit(1);
-		  } else {
+		    exit(1);
+          } else {
           sscanf(buf, "%d", &pos); //store the position of server (which is in buf) in pos 
           printf("turn[%c]>>%s\n", turn,buf);
           }
@@ -141,6 +140,7 @@ int main(int argc, char *argv[])
 		    perror("send to server failed !");
 			exit(1);
 		  }
+          printf("client send %s\n", buf);
         }
         
         ((char*)sc)[pos-1] = turn;
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 
         if(check(sc)) {
 
-          printf("%c win!", turn);
+          printf("%c win!\n", turn);
           break;
 
         }
