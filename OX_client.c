@@ -1,4 +1,4 @@
-/*
+
 /*
 ** client.c -- 一個 stream socket client 的 demo
 */
@@ -122,27 +122,30 @@ int main(int argc, char *argv[])
 
   printform(frm, (char*)sc);
 
-      while(round < 9) {
+  do {
 
-        if(recv(sockfd, buf, sizeof(buf), 0) < 0) {
-          perror("received from server failed !");
-          exit(1);
-        }
-
-        if(turn == 'X') {
-
-          sscanf(buf, "%d", &pos);
+        if(turn == 'X') {  //server turn , receive the pos from server
+          if(recv(sockfd, buf, sizeof(buf), 0) < 0) { 
+		    perror("received from server failed !");
+			exit(1);
+		  } else {
+          sscanf(buf, "%d", &pos); //store the position of server (which is in buf) in pos 
           printf("turn[%c]>>%s\n", turn,buf);
-        
+          }
         }
-        else {
+        else {  //client turn
           printf("turn[%c]>>", turn);
-          sscanf(buf, "%d", &pos);
+		  scanf("%d", &pos);  //enter the position of client
+          snprintf(buf, MAXDATASIZE, "%d", pos); //store position of client in buf
+		  if(send(sockfd, buf, sizeof(buf), 0) < 0) { //send to server
+		    perror("send to server failed !");
+			exit(1);
+		  }
         }
         
         ((char*)sc)[pos-1] = turn;
 
-        printform(frm, (char*)sc); //?
+        printform(frm, (char*)sc); 
 
         if(check(sc)) {
 
@@ -153,20 +156,16 @@ int main(int argc, char *argv[])
         round++;
         turn = (turn=='O') ? 'X' : 'O';
 
-      }
+      }while(round < 9);
       if(round==9) {
  
-        printf("平手！！");
+        printf("The competition is draw !\n");
 
       }
-    /* Send message to the server */
-    /* if((sd_numbytes = send(sockfd, sd_msg, strlen(sd_msg), 0))==-1) {
-      perror("ClientERROR");
-      exit(1);
-    } */
-  
-  close(sockfd);
 
-  return 0;
+
+    close(sockfd);
+
+    return 0;
 
 }

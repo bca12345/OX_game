@@ -35,10 +35,10 @@ void printform(char* form[],char* sc)
 			j+=3;
 		}
 	}
-}	
+}
 
 int check(char sc[3][3])
-{	
+{
 	int i;
 	for(i=0;i<3;i++){
 		if((sc[i][0]==sc[i][1]&&sc[i][1]==sc[i][2])||//列判斷 
@@ -86,42 +86,7 @@ int main(void)
 	'7', '8', '9' };
   char turn = 'O';
   int pos, round = 0;
-
-  do {
-
-    printform(frm, (char*)sc);
-
-    if(turn == 'X') {  //client turn
-      snprintf(buf, MAXDATASIZE, "%d", pos); //?
-      num_rcv=send(new_fd, buf, sizeof(buf), 0); //?
-      num_rcv=recv(new_fd, buf, sizeof(buf), 0);
-      sscanf(buf, "%d", &pos); //scan an int from buf and store in pos 
-    }
-    else {  //server play
-      printf("turn[%c]>>", turn);
-      scanf("%d", &pos);
-    }
-     
-    ((char*)sc)[pos-1] = turn;
-
-    if(check(sc)) {
-
-      printf("%c win!", turn);
-      break;
-
-    }
-    round++;
-    turn = (turn=='O') ? 'X' : 'O';
     
-    } while(round < 9);
- 
-  if(round == 9 )
-  {
-    printf("draw!\n");
-  }
-
-
-
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_UNSPEC;  //for IPv4 => AF_INET, IPv6 = AF_INET6
   hints.ai_socktype = SOCK_STREAM; //TCP stream sockets
@@ -196,69 +161,76 @@ int main(void)
       get_in_addr((struct sockaddr *)&their_addr),
       s, sizeof s);
     printf("server: got connection from %s\n", s);
-   
-    do {
 
-      if(recv(new_fd, buf, sizeof(buf), 0) < 0) { //recieved from client
-      perror("received from client failed !");
-      exit(1);
-      }
+	printform(frm, (char *)sc);
 
-      turn = 'O';
-      printf("turn[%c]>>%s\n", turn, buf); //print the choice of client
-      sscanf(buf, "%d", &pos); //store the int form buf in pos
-      ((char*)sc)[pos-1] = turn;
+    /*pid_t fork()=-1: error, =0: child process, >0: parent process 
+      fork a child process to handle the new connection*/
+
+    if( !fork() ) { //this is child process
+      
+      close(sockfd);  //child dont need to listener
+
+      do {
+
+        if(recv(new_fd, buf, sizeof(buf), 0) < 0) { //recieved from client
+        perror("received from client failed !");
+        exit(1);
+        }
+
+        turn = 'O';
+        printf("turn[%c]>>%s\n", turn, buf); //print the choice of client
+        sscanf(buf, "%d", &pos); //store the int form buf in pos
+        ((char*)sc)[pos-1] = turn;
        
-      if(check(sc)) {
+        if(check(sc)) {
 
           printf("%c win!", turn);
+     
+		  break;
+
+        }  
+
+		printform(frm, (char*)sc);
+		
+        round++;
+
+        if(round==5) {
+          printf("The competition is draw !\n");
           break;
-
-      }
-
-      round++;
-
-      if(round==5) {
-        printf("The competition is draw !\n");
-        break;
-      }
+        }
 
       /* Server turn */
 
-      turn = (turn == 'O') ? 'X' : 'O' ;
-      printf("trun[%c]>>", turn); //'X' turn (server)
-      scanf("%d", &pos);
+        turn = (turn == 'O') ? 'X' : 'O' ;
+        printf("trun[%c]>>", turn); //'X' turn (server)
+        scanf("%d", &pos);
 
-      ((char*)sc)[pos-1] = turn;
-      printform(frm, (char*)sc);
+        ((char*)sc)[pos-1] = turn;
+        printform(frm, (char*)sc);
 
-      if(check(sc)) {
+        if(check(sc)) {
 
           printf("%c win!", turn);
           break;
 
-      }
-      snprintf(buf, MAXDATASIZE, "%d", pos); //store pos in buf
+        } 
+        snprintf(buf, MAXDATASIZE, "%d", pos); //store pos in buf
 
-      if(send(new_fd, buf, sizeof(buf), 0) < 0) { //send to client
-        perror("send to client failed !");
-        exit(1);
-      }
+        if(send(new_fd, buf, sizeof(buf), 0) < 0) { //send to client
+          perror("send to client failed !");
+          exit(1);
+        }
 
-    }while(round < 5);
+      } while(round < 5);
 
-    /* 直接send也可以
-    send(new_fd, "Hello, world!", 13, 0); */
+	  close(new_fd);
+
+	  exit(0);
+    }
      
     /*pid_t fork()=-1: error, =0: child process, >0: parent process 
       fork a child process to handle the new connection*/
-    if (!fork()) { // 這個是 child process
-      close(sockfd); // child 不需要 listener
-
-        close(new_fd);
-
-        exit(0);
-    }
 
 
     close(new_fd); // parent 不需要這個
