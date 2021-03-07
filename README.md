@@ -22,5 +22,5 @@
   
   
     ./OX_client 127.0.0.1
-    
-3. It will show as the result
+
+3.It will show as the result
