@@ -10,10 +10,14 @@ type the number to decide the place you put 'O' or 'X'
 
 ### Usage
 
-1. Create server.
+1.Create server
+  
+  
     ./OX_server
 
-2.Run client and connect to localhost.
+2.Run client and connect to localhost
+  
+  
     ./OX_client 127.0.0.1
     
-3. It will show as the result.
+3. It will show as the result
